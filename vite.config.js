@@ -10,7 +10,7 @@ export default defineConfig({
     vue(),
     vueDevTools(),
   ],
-  base: '/qscape2/',
+  base: './qscape2/',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
