@@ -86,7 +86,6 @@ const avatarStyle = computed(() => {
   if (props.employee.avatar) {
     return { backgroundImage: `url(${props.employee.avatar})` }
   }
-  return { backgroundImage: 'url(https://via.placeholder.com/52x52?text=?)' }
 })
 </script>
 
