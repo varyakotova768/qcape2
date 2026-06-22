@@ -52,18 +52,11 @@ class BitrixService {
       name: `${user.NAME || ''} ${user.LAST_NAME || ''}`.trim() || `Пользователь ${user.ID}`,
       position: user.WORK_POSITION || '',
       avatar: user.PERSONAL_PHOTO || '',
-      // Для заглушки пока оставляем тестовые данные
-      plannedHours: Math.floor(Math.random() * 4) + 4,
+      plannedHours: 0,
       capacity: 8,
-      loadStatus: this.getRandomLoadStatus(),
+      loadStatus: 'free',
       tasks: [],
     }))
-  }
-
-  // Вспомогательный метод для генерации статуса загрузки (пока заглушка)
-  getRandomLoadStatus() {
-    const statuses = ['normal', 'normal', 'normal', 'overload', 'free']
-    return statuses[Math.floor(Math.random() * statuses.length)]
   }
 
   // Метод для получения данных с задержкой (имитация загрузки)
@@ -90,53 +83,40 @@ class BitrixService {
         name: 'Петр Федоров',
         position: 'Backend Developer',
         avatar: '',
-        plannedHours: 9,
+        plannedHours: 0,
         capacity: 8,
-        loadStatus: 'overload',
-        tasks: [
-          { id: 101, title: 'Задача 1', status: 'pending', spentHours: 0, estimate: 2 },
-          { id: 102, title: 'Задача 2', status: 'pending', spentHours: 1.2, estimate: 2 },
-          { id: 103, title: 'Задача 3', status: 'pending', spentHours: 2.2, estimate: 1 },
-        ]
+        loadStatus: 'free',
+        tasks: []
       },
       {
         id: 2,
         name: 'Иван Иванов',
         position: 'QA Engineer',
         avatar: '',
-        plannedHours: 6,
+        plannedHours: 0,
         capacity: 8,
         loadStatus: 'free',
-        tasks: [
-          { id: 201, title: 'Задача 6', status: 'inProgress', spentHours: 0.2, estimate: 1 },
-          { id: 202, title: 'Задача 7', status: 'waiting', spentHours: 4.8, estimate: 5 }
-        ]
+        tasks: []
       },
       {
         id: 3,
         name: 'Василиса Васильева',
         position: 'Android Developer',
         avatar: '',
-        plannedHours: 6,
+        plannedHours: 0,
         capacity: 8,
         loadStatus: 'free',
-        tasks: [
-          { id: 301, title: 'Задача 8', status: 'pending', spentHours: 0, estimate: 1 },
-          { id: 302, title: 'Задача 9', status: 'pending', spentHours: 0, estimate: 2 },
-        ]
+        tasks: []
       },
       {
         id: 4,
         name: 'Мария Ромашкова',
         position: 'Frontend Developer',
         avatar: '',
-        plannedHours: 8,
+        plannedHours: 0,
         capacity: 8,
-        loadStatus: 'normal',
-        tasks: [
-          { id: 401, title: 'Задача 11', status: 'pending', spentHours: 0, estimate: 1 },
-          { id: 402, title: 'Задача 12', status: 'inProgress', spentHours: 1.2, estimate: 2 },
-        ]
+        loadStatus: 'free',
+        tasks: []
       }
     ]
   }

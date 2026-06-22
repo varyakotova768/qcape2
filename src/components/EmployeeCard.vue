@@ -22,7 +22,7 @@
     <div class="employee-sidebar">
       <div class="workload-indicator" :class="workloadClass">
         <span class="workload-label">Запланировано</span>
-        <strong class="workload-hours">{{ employee.plannedHours }}/{{ employee.capacity }}</strong>
+        <strong class="workload-hours">{{ plannedHours }}/{{ capacity }}</strong>
       </div>
       <button class="bitrix-link" @click="$emit('openBitrix')">
         <svg class="bitrix-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -41,16 +41,44 @@ import { computed } from 'vue'
 import TaskBadge from './TaskBadge.vue'
 
 const props = defineProps({
-  employee: { type: Object, required: true }
+  employee: { type: Object, required: true },
+  period: { type: String, default: 'today' }
 })
 
 defineEmits(['openBitrix'])
 
+// Расчет capacity в зависимости от периода
+const capacity = computed(() => {
+  switch (props.period) {
+    case 'today':
+      return 8
+    case 'week':
+      return 40 // 8 * 5 рабочих дней
+    case 'month':
+      // Среднее количество рабочих дней в месяце ~21
+      return 168 // 8 * 21
+    default:
+      return 8
+  }
+})
+
+// plannedHours = 0 так как задачи не подключены
+const plannedHours = computed(() => {
+  return 0
+})
+
+// Определяем статус загрузки на основе plannedHours и capacity
 const workloadClass = computed(() => {
-  switch (props.employee.loadStatus) {
-    case 'overload': return 'workload-overload'
-    case 'free': return 'workload-free'
-    default: return 'workload-normal'
+  if (plannedHours.value === 0) {
+    return 'workload-free'
+  }
+  const loadPercent = plannedHours.value / capacity.value
+  if (loadPercent > 1) {
+    return 'workload-overload'
+  } else if (loadPercent >= 0.8) {
+    return 'workload-normal'
+  } else {
+    return 'workload-free'
   }
 })
 
@@ -58,6 +86,7 @@ const avatarStyle = computed(() => {
   if (props.employee.avatar) {
     return { backgroundImage: `url(${props.employee.avatar})` }
   }
+  return { backgroundImage: 'url(https://via.placeholder.com/52x52?text=?)' }
 })
 </script>
 

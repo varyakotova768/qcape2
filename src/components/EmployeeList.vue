@@ -10,6 +10,7 @@
       v-for="employee in employees"
       :key="employee.id"
       :employee="employee"
+      :period="period"
       @openBitrix="$emit('openBitrix', employee.id)"
     />
     
@@ -24,7 +25,8 @@ import EmployeeCard from './EmployeeCard.vue'
 
 defineProps({
   employees: { type: Array, required: true },
-  isLoading: { type: Boolean, default: false }
+  isLoading: { type: Boolean, default: false },
+  period: { type: String, default: 'today' }
 })
 
 defineEmits(['openBitrix'])

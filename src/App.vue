@@ -17,6 +17,7 @@
               v-model:workloadFilter="workloadFilter"
               v-model:activeTab="activeTab"
               v-model:taskSearch="taskSearch"
+              v-model:period="selectedPeriod"
               :isLoading="isLoading"
             />
             
@@ -24,6 +25,7 @@
               v-if="activeTab === 'employees'"
               :employees="filteredEmployees"
               :isLoading="isLoading"
+              :period="selectedPeriod"
               @openBitrix="openBitrix"
             />
           </div>
@@ -54,6 +56,7 @@ const searchQuery = ref('')
 const workloadFilter = ref('all')
 const taskSearch = ref('')
 const activeTab = ref('employees')
+const selectedPeriod = ref('today')
 const lastUpdate = ref(new Date())
 
 const loadData = async () => {
