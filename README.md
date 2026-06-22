@@ -1,38 +1,224 @@
-# qscape2
+# QScape2 - Дашборд загруженности команды
 
-This template should help get you started developing with Vue 3 in Vite.
+## 📋 Описание проекта
 
-## Recommended IDE Setup
+Дашборд для отображения загруженности команды с интеграцией с Битрикс24.
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+---
 
-## Recommended Browser Setup
+## 🚀 Быстрый старт
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+### 1. Установка Node.js
 
-## Customize configuration
+Перед началом работы убедитесь, что у вас установлена **Node.js версии 20.19.0 или выше**.
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+**Проверьте версию:**
+```bash
+node -v
+```
 
-## Project Setup
+Если Node.js не установлена, скачайте ее с официального сайта: https://nodejs.org/
 
-```sh
+---
+
+### 2. Клонирование проекта
+
+Скопируйте репозиторий на свой компьютер:
+
+```bash
+git clone https://github.com/ваш-логин/qscape2.git
+cd qscape2
+```
+
+---
+
+### 3. Установка зависимостей
+
+Установите все необходимые пакеты:
+
+```bash
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+---
 
-```sh
+### 4. Настройка переменных окружения
+
+**Важно:** Для работы с Битрикс24 нужен вебхук.
+
+1. В корне проекта есть файл `.env.example` — это шаблон
+2. Создайте свой файл `.env` на основе шаблона:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Откройте файл `.env` и вставьте ваш вебхук:
+
+   ```
+   VITE_BITRIX_WEBHOOK=https://ваш-битрикс24.bitrix24.ru/rest/1/ваш_секретный_ключ/
+   ```
+
+**Где взять вебхук?**
+- Зайдите в Битрикс24
+- Раздел "Разработчикам" → "Вебхуки"
+- Создайте новый вебхук или используйте существующий
+
+---
+
+### 5. Запуск проекта
+
+#### Режим разработки (с автоматической перезагрузкой)
+
+```bash
 npm run dev
 ```
 
-### Compile and Minify for Production
+После запуска откройте в браузере: http://localhost:5173/
 
-```sh
+#### Сборка для продакшена
+
+```bash
 npm run build
+```
+
+#### Просмотр собранной версии
+
+```bash
+npm run preview
+```
+
+#### Запуск сервера (для работы с Битрикс24)
+
+```bash
+npm run server
+```
+
+---
+
+## 📁 Структура проекта
+
+```
+qscape2/
+├── src/
+│   ├── components/          # Vue-компоненты
+│   │   ├── DashboardHeader.vue
+│   │   ├── EmployeeCard.vue
+│   │   ├── EmployeeFilters.vue
+│   │   ├── EmployeeList.vue
+│   │   ├── StatisticsCards.vue
+│   │   ├── StatisticsSidebar.vue
+│   │   ├── StatusBadge.vue
+│   │   └── TaskBadge.vue
+│   ├── services/
+│   │   └── bitrix.js         # Сервис для работы с API Битрикс24
+│   ├── App.vue               # Главный компонент
+│   ├── main.js               # Точка входа
+│   └── main.css              # Глобальные стили
+├── public/
+│   └── favicon.ico
+├── .env                      # Переменные окружения (НЕ КОММИТИТЬ!)
+├── .env.example              # Шаблон переменных окружения
+├── index.html                # HTML-шаблон
+├── package.json              # Зависимости проекта
+├── server.js                 # Сервер для работы с Битрикс24
+├── vite.config.js            # Конфигурация Vite
+└── README.md                 # Эта инструкция
+```
+
+---
+
+## 🔧 Работа с Git
+
+### Основные команды
+
+**Проверить статус изменений:**
+```bash
+git status
+```
+
+**Добавить все изменения:**
+```bash
+git add .
+```
+
+**Сделать коммит:**
+```bash
+git commit -m "Ваше сообщение о том, что изменилось"
+```
+
+**Отправить изменения на GitHub:**
+```bash
+git push
+```
+
+**Получить последние изменения с GitHub:**
+```bash
+git pull
+```
+
+---
+
+## 🛠️ Полезные команды
+
+| Команда | Описание |
+|---------|----------|
+| `npm run dev` | Запуск в режиме разработки |
+| `npm run build` | Сборка для продакшена |
+| `npm run preview` | Просмотр собранной версии |
+| `npm run server` | Запуск сервера |
+| `npm install` | Установка всех зависимостей |
+
+---
+
+## ❗ Частые проблемы и их решение
+
+### 1. Ошибка "VITE_BITRIX_WEBHOOK не задан"
+
+**Решение:** Проверьте, что файл `.env` существует и в нем правильно указан вебхук.
+
+### 2. Ошибка при запуске "node: command not found"
+
+**Решение:** Установите Node.js с официального сайта.
+
+### 3. Ошибка при установке зависимостей
+
+**Решение:**
+```bash
+rm -rf node_modules
+rm package-lock.json
+npm install
+```
+
+### 4. Не показываются сотрудники из Битрикс24
+
+**Решение:**
+- Проверьте правильность вебхука в `.env`
+- Убедитесь, что сервер запущен (`npm run server`)
+- Откройте консоль браузера (F12) и посмотрите ошибки
+
+---
+
+## 📝 Для разработчиков
+
+### Как добавить новый компонент
+
+1. Создайте файл в папке `src/components/`
+2. Импортируйте и используйте в нужном месте
+
+### Как изменить стили
+
+- Глобальные стили — в `src/main.css`
+- Стили компонента — внутри `<style scoped>` в каждом `.vue` файле
+
+### Как добавить новый API метод
+
+В файле `src/services/bitrix.js` добавьте новый метод:
+
+```javascript
+async getTasks() {
+  return await this.call('tasks.task.list', {
+    filter: { '=STATUS': 2 }
+  })
+}
 ```
