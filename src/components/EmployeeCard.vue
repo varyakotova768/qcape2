@@ -39,7 +39,7 @@ const props = defineProps({
 
 defineEmits(['openBitrix'])
 
-// --- Вспомогательные функции (синхронизированы с App.vue) ---
+// --- Вспомогательные функции ---
 
 function isOverlapping(taskStart, taskEnd, rangeStart, rangeEnd) {
   const start = taskStart || new Date(0)
@@ -141,12 +141,10 @@ const capacity = computed(() => {
 })
 
 const activeTasks = computed(() => {
-  // Если включен фильтр "Без времени" – показываем все неполные задачи сотрудника (без учёта дат)
   if (props.timeFilter === 'incomplete') {
     return (props.employee.tasks || []).filter(task => isTaskIncomplete(task))
   }
 
-  // Иначе – обычная фильтрация по датам
   if (!props.dateFrom || !props.dateTo) return []
   const rangeStart = new Date(props.dateFrom)
   const rangeEnd = new Date(props.dateTo)
@@ -154,6 +152,10 @@ const activeTasks = computed(() => {
   rangeEnd.setHours(23, 59, 59, 999)
 
   return (props.employee.tasks || []).filter(task => {
+    // Исключаем задачи, у которых нет времени (ни затраченного, ни планового)
+    if (getTaskTime(task) === 0) {
+      return false
+    }
     if (!isTaskInPeriod(task, props.dateFrom, props.dateTo)) return false
     return true
   })
@@ -161,10 +163,9 @@ const activeTasks = computed(() => {
 
 const plannedHours = computed(() => {
   let totalSeconds = 0
-  // Для расчёта загруженности используем те же задачи, что и для статистики (с датами)
-  // Если выбран "Без времени", загруженность не считается, но оставим логику на всякий случай
   const tasksForLoad = (props.employee.tasks || []).filter(task => {
-    if (props.timeFilter === 'incomplete') return false // не учитываем
+    if (props.timeFilter === 'incomplete') return false
+    if (getTaskTime(task) === 0) return false // нет времени – не учитываем
     return isTaskInPeriod(task, props.dateFrom, props.dateTo)
   })
   tasksForLoad.forEach(task => {
@@ -203,7 +204,7 @@ const plannedHours = computed(() => {
 })
 
 const workloadClass = computed(() => {
-  if (props.timeFilter === 'incomplete') return 'workload-weekend' // серый
+  if (props.timeFilter === 'incomplete') return 'workload-weekend'
   if (isAllWeekend.value) return 'workload-weekend'
   if (plannedHours.value === 0) return 'workload-free'
   const loadPercent = plannedHours.value / capacity.value

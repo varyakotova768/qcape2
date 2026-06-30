@@ -44,7 +44,7 @@
         <span class="stat-number">{{ stats.totalTasks }}</span>
       </div>
       <div class="stat-card-row stat-unit-row">
-        <span class="stat-unit">всего</span>
+        <span class="stat-unit">{{ tasksUnit }}</span>
       </div>
     </div>
 
@@ -53,7 +53,7 @@
         <span class="stat-label">{{ isGray ? 'Без времени' : 'Задач закрыто' }}</span>
       </div>
       <div class="stat-card-row stat-value-row">
-        <span class="stat-number">{{ isGray ? noTimeCount : stats.completedPercent + '%' }}</span>
+        <span class="stat-number">{{stats.completedPercent + '%' }}</span>
       </div>
       <div class="stat-card-row stat-unit-row">
         <span class="stat-unit">{{ isGray ? 'не хватает данных' : periodLabel }}</span>
@@ -67,7 +67,8 @@ defineProps({
   stats: { type: Object, required: true },
   periodLabel: { type: String, default: 'на сегодня' },
   isGray: { type: Boolean, default: false },
-  noTimeCount: { type: Number, default: 0 }
+  noTimeCount: { type: Number, default: 0 },
+  tasksUnit: { type: String, default: 'всего' }
 })
 </script>
 

@@ -6,8 +6,9 @@
         <StatisticsCards
           :stats="statistics"
           :periodLabel="periodLabel"
-          :isGray="isTimeFilterActive"
+          :isGray="false"
           :noTimeCount="allNoTimeCount"
+          :tasksUnit="tasksUnit"
         />
         <div class="dashboard-content">
           <div class="dashboard-left">
@@ -47,7 +48,7 @@
             :distribution="distributionData"
             :taskStatuses="taskStatusList"
             :isLoading="isLoading"
-            :isGray="isTimeFilterActive"
+            :isGray="false"
           />
         </div>
       </div>
@@ -107,30 +108,24 @@ function getTaskInterval(task) {
 
 function getTaskTime(task) {
   if (task.status === 'completed') {
-    // Для завершённых: сначала фактическое время, потом плановое
     if (task.timeSpent > 0) return task.timeSpent
     if (task.timeEstimate > 0) return task.timeEstimate
     return 0
   } else {
-    // Для незавершённых: только плановое время
     return task.timeEstimate > 0 ? task.timeEstimate : 0
   }
 }
 
 function isTaskIncomplete(task) {
-  // Проверяем наличие начала
   const hasStart = !!(task.plannedStart || task.createdDate)
-  // Проверяем наличие конца
   let hasEnd = false
   if (task.status === 'completed') {
     hasEnd = !!(task.closedDate || task.plannedEnd || task.deadline)
   } else {
     hasEnd = !!(task.plannedEnd || task.deadline)
   }
-  // Проверяем наличие времени (только timeEstimate для незавершённых)
   const time = getTaskTime(task)
   const hasTime = time > 0
-
   return !hasStart || !hasEnd || !hasTime
 }
 
@@ -154,7 +149,8 @@ function isTaskInPeriod(task, from, to) {
   if (!from || !to) return true
   const rangeStart = new Date(from)
   const rangeEnd = new Date(to)
-  // Не обнуляем время у rangeStart и rangeEnd – они уже приходят с полным временем из дата-пикеров
+  rangeStart.setHours(0, 0, 0, 0)
+  rangeEnd.setHours(23, 59, 59, 999)
 
   const interval = getTaskInterval(task)
   if (!interval) return false
@@ -162,10 +158,10 @@ function isTaskInPeriod(task, from, to) {
   let effectiveStart = interval.start
   let effectiveEnd = interval.end
 
-  // Для незавершённых задач проверяем просрочку с учётом времени
   if (task.status !== 'completed') {
     const now = new Date()
-    if (effectiveEnd < now) {
+    now.setHours(0, 0, 0, 0)
+    if (interval.end < now) {
       effectiveEnd = now
     }
   }
@@ -173,10 +169,18 @@ function isTaskInPeriod(task, from, to) {
   return isOverlapping(effectiveStart, effectiveEnd, rangeStart, rangeEnd)
 }
 
-function computeEmployeeLoad(employee, from, to) {
+function computeEmployeeLoad(employee, from, to, timeFilter = 'all') {
+  if (timeFilter === 'incomplete') {
+    return {
+      plannedHours: 0,
+      capacity: 0,
+      loadStatus: 'weekend',
+      tasksInPeriod: []
+    }
+  }
+
   const tasksInPeriod = (employee.tasks || []).filter(task => {
-    // Для незавершённых задач должно быть плановое время > 0
-    if (task.status !== 'completed' && task.timeEstimate === 0) {
+    if (task.status !== 'completed' && Number(task.timeEstimate) === 0) {
       return false
     }
     return isTaskInPeriod(task, from, to) && getTaskTime(task) > 0
@@ -234,9 +238,9 @@ function computeEmployeeLoad(employee, from, to) {
   return { plannedHours, capacity, loadStatus, tasksInPeriod }
 }
 
-function enrichEmployeesWithLoad(employees, from, to) {
+function enrichEmployeesWithLoad(employees, from, to, timeFilter) {
   return employees.map(emp => {
-    const { plannedHours, capacity, loadStatus, tasksInPeriod } = computeEmployeeLoad(emp, from, to)
+    const { plannedHours, capacity, loadStatus, tasksInPeriod } = computeEmployeeLoad(emp, from, to, timeFilter)
     return {
       ...emp,
       plannedHours,
@@ -273,32 +277,37 @@ const loadData = async () => {
 
 onMounted(loadData)
 
-// --- Данные для статистики (только по датам) ---
+// --- Данные для статистики (только задачи с временем) ---
 
 const tasksByDate = computed(() => {
-  if (!dateFrom.value || !dateTo.value) return tasks.value
-  return tasks.value.filter(task => isTaskInPeriod(task, dateFrom.value, dateTo.value))
+  let base = tasks.value
+  if (dateFrom.value && dateTo.value) {
+    base = base.filter(task => isTaskInPeriod(task, dateFrom.value, dateTo.value))
+  }
+  // Исключаем задачи без времени (незавершённые с timeEstimate=0 и завершённые с нулевым временем)
+  return base.filter(task => getTaskTime(task) > 0)
 })
 
 const employeesByDate = computed(() => {
-  return enrichEmployeesWithLoad(employees.value, dateFrom.value, dateTo.value)
+  return enrichEmployeesWithLoad(employees.value, dateFrom.value, dateTo.value, timeFilter.value)
 })
 
 // --- Фильтр "Без времени" ---
 
 const isTimeFilterActive = computed(() => timeFilter.value === 'incomplete')
 
-// Общее количество задач без времени (не зависит от дат)
 const allNoTimeCount = computed(() => {
   return tasks.value.filter(task => isTaskIncomplete(task)).length
 })
 
+// --- Список сотрудников для фильтра "Без времени" (те, у кого есть неполные задачи) ---
+const employeesWithNoTime = computed(() => {
+  return employees.value.filter(emp => (emp.tasks || []).some(task => isTaskIncomplete(task)))
+})
+
 const filteredEmployees = computed(() => {
   if (isTimeFilterActive.value) {
-    // Показываем только тех сотрудников, у которых есть хотя бы одна неполная задача
-    return employees.value.filter(emp => {
-      return (emp.tasks || []).some(task => isTaskIncomplete(task))
-    })
+    return employeesWithNoTime.value
   }
   let filtered = employeesByDate.value
   if (workloadFilter.value !== 'all') {
@@ -317,7 +326,6 @@ const filteredEmployees = computed(() => {
 
 const filteredTasks = computed(() => {
   if (isTimeFilterActive.value) {
-    // Показываем все неполные задачи (без учёта дат), но с учётом поиска и статусов
     let result = tasks.value.filter(task => isTaskIncomplete(task))
     if (taskStatusFilter.value !== 'all') {
       result = result.filter(t => t.status === taskStatusFilter.value)
@@ -337,14 +345,7 @@ const filteredTasks = computed(() => {
     return result
   }
 
-  let filtered = tasksByDate.value
-  // Добавляем проверку: для незавершённых задач должно быть плановое время > 0
-  filtered = filtered.filter(task => {
-    if (task.status !== 'completed' && task.timeEstimate === 0) {
-      return false // незавершённые без планового времени не показываются
-    }
-    return true
-  })
+  let filtered = tasksByDate.value // уже отфильтрованы по времени и датам
   
   if (taskStatusFilter.value !== 'all') {
     filtered = filtered.filter(t => t.status === taskStatusFilter.value)
@@ -364,9 +365,23 @@ const filteredTasks = computed(() => {
   return filtered
 })
 
-// --- Статистика (на основе tasksByDate и employeesByDate) ---
+// --- Статистика ---
 
 const statistics = computed(() => {
+  if (isTimeFilterActive.value) {
+    // Режим "Без времени": показываем только сотрудников с неполными задачами,
+    // перегруженных/свободных/нормальных нет, задачи — это все неполные задачи
+    const noTimeTasks = tasks.value.filter(t => isTaskIncomplete(t))
+    return {
+      totalEmployees: employeesWithNoTime.value.length,
+      overloadCount: 0,
+      freeCount: 0,
+      normalCount: 0,
+      totalTasks: noTimeTasks.length,
+      completedPercent: 0
+    }
+  }
+
   const allTasks = tasksByDate.value
   const completedTasks = allTasks.filter(t => t.status === 'completed').length
   const allEmployees = employeesByDate.value
@@ -392,13 +407,19 @@ const distributionData = computed(() => ({
   free: statistics.value.freeCount
 }))
 
+// Статусы задач для боковой панели
 const taskStatusList = computed(() => {
-  const allTasks = tasksByDate.value
+  let baseTasks
+  if (isTimeFilterActive.value) {
+    baseTasks = tasks.value.filter(task => isTaskIncomplete(task))
+  } else {
+    baseTasks = tasksByDate.value
+  }
   return [
-    { type: 'inProgress', label: 'Выполняется', count: allTasks.filter(t => t.status === 'inProgress').length, color: 'blue' },
-    { type: 'waiting', label: 'Ждет контроля', count: allTasks.filter(t => t.status === 'waiting').length, color: 'red' },
-    { type: 'pending', label: 'Ожидает выполнения', count: allTasks.filter(t => t.status === 'pending').length, color: 'orange' },
-    { type: 'completed', label: 'Завершена', count: allTasks.filter(t => t.status === 'completed').length, color: 'green' }
+    { type: 'inProgress', label: 'Выполняется', count: baseTasks.filter(t => t.status === 'inProgress').length, color: 'blue' },
+    { type: 'waiting', label: 'Ждет контроля', count: baseTasks.filter(t => t.status === 'waiting').length, color: 'red' },
+    { type: 'pending', label: 'Ожидает выполнения', count: baseTasks.filter(t => t.status === 'pending').length, color: 'orange' },
+    { type: 'completed', label: 'Завершена', count: baseTasks.filter(t => t.status === 'completed').length, color: 'green' }
   ]
 })
 
@@ -415,13 +436,13 @@ const periodLabel = computed(() => {
   if (isToday) return 'сегодня'
 
   const diffDays = Math.floor((to - from) / (1000 * 60 * 60 * 24)) + 1
-  if (diffDays === 7) {
-    const startDay = from.getDay()
-    if (startDay === 1) return 'за неделю'
-  }
   if (diffDays === 1) return 'за день'
-  if (diffDays <= 31) return 'за месяц'
   return 'за период'
+})
+
+// Подпись для карточки "Задач"
+const tasksUnit = computed(() => {
+  return isTimeFilterActive.value ? 'не учитывается' : 'всего'
 })
 
 // --- Синхронизация ---
