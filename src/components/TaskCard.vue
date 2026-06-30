@@ -35,7 +35,6 @@
       </div>
     </div>
 
-    <!-- Нижняя часть: временные метки -->
     <div class="task-meta">
       <div class="meta-item meta-time">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -73,14 +72,11 @@ import BitrixLink from './BitrixLink.vue'
 
 const props = defineProps({
   task: { type: Object, required: true },
-  employees: { type: Array, default: () => [] },
-  dateFrom: { type: String, default: '' },
-  dateTo: { type: String, default: '' }
+  employees: { type: Array, default: () => [] }
 })
 
 defineEmits(['openBitrix'])
 
-// Форматирование времени ЧЧ:ММ, если нет времени – --:--
 const formatTimeHM = (seconds) => {
   if (!seconds || seconds <= 0) return '--:--'
   const totalSeconds = Math.round(seconds)
@@ -100,7 +96,6 @@ const estimateClass = computed(() => {
   return ''
 })
 
-// Форматирование даты с fallback на createdDate и deadline
 const formatDate = (dateString) => {
   if (!dateString) return '—'
   const d = new Date(dateString)
@@ -111,13 +106,11 @@ const formatDate = (dateString) => {
   return `${day} ${month} ${hours}:${minutes}`
 }
 
-// Начало: plannedStart или createdDate
 const startDateDisplay = computed(() => {
   const date = props.task.plannedStart || props.task.createdDate
   return formatDate(date)
 })
 
-// Конец: для завершённых - closedDate, иначе plannedEnd или deadline
 const endDateDisplay = computed(() => {
   let date = null
   if (props.task.status === 'completed') {
@@ -128,8 +121,6 @@ const endDateDisplay = computed(() => {
   return formatDate(date)
 })
 
-// --- Исправленная логика определения просрочки ---
-// Используем ту же логику, что и в endDateDisplay: plannedEnd или deadline
 const effectiveEndDate = computed(() => {
   if (props.task.status === 'completed') return null
   const endDate = props.task.plannedEnd ? new Date(props.task.plannedEnd) : null
@@ -140,7 +131,7 @@ const effectiveEndDate = computed(() => {
 
 const endTextClass = computed(() => {
   if (props.task.status === 'completed') {
-    return 'completed' // зелёный
+    return 'completed'
   }
   const endDate = effectiveEndDate.value
   if (!endDate) return ''
@@ -151,7 +142,7 @@ const endTextClass = computed(() => {
 
 const endIconColor = computed(() => {
   if (props.task.status === 'completed') {
-    return '#416517' // зелёный
+    return '#416517'
   }
   const endDate = effectiveEndDate.value
   if (!endDate) return '#0C447C'
@@ -215,7 +206,6 @@ watch(() => props.task.description, () => {
 </script>
 
 <style scoped>
-/* Стили без изменений (уже были) */
 .task-card {
   box-sizing: border-box;
   display: flex;
@@ -309,13 +299,13 @@ watch(() => props.task.description, () => {
   color: #0C447C;
 }
 .meta-end-text {
-  color: #0C447C; /* по умолчанию синий */
+  color: #0C447C;
 }
 .meta-end-text.deadline-overdue {
-  color: #E24B4A !important; /* красный при просрочке */
+  color: #E24B4A !important;
 }
 .meta-end-text.completed {
-  color: #416517 !important; /* зелёный для завершённых */
+  color: #416517 !important;
 }
 .time-over {
   color: #E24B4A;

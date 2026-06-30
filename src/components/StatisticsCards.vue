@@ -1,5 +1,5 @@
 <template>
-  <div class="statistics-cards" :class="{ 'gray-mode': isGray }">
+  <div class="statistics-cards">
     <div class="stat-card">
       <div class="stat-card-row">
         <span class="stat-label">Сотрудников</span>
@@ -50,13 +50,13 @@
 
     <div class="stat-card">
       <div class="stat-card-row">
-        <span class="stat-label">{{ isGray ? 'Без времени' : 'Задач закрыто' }}</span>
+        <span class="stat-label">Задач закрыто</span>
       </div>
       <div class="stat-card-row stat-value-row">
-        <span class="stat-number">{{stats.completedPercent + '%' }}</span>
+        <span class="stat-number">{{ stats.completedPercent + '%' }}</span>
       </div>
       <div class="stat-card-row stat-unit-row">
-        <span class="stat-unit">{{ isGray ? 'не хватает данных' : periodLabel }}</span>
+        <span class="stat-unit">{{ periodLabel }}</span>
       </div>
     </div>
   </div>
@@ -65,8 +65,7 @@
 <script setup>
 defineProps({
   stats: { type: Object, required: true },
-  periodLabel: { type: String, default: 'на сегодня' },
-  isGray: { type: Boolean, default: false },
+  periodLabel: { type: String, default: 'за день' },
   noTimeCount: { type: Number, default: 0 },
   tasksUnit: { type: String, default: 'всего' }
 })
@@ -84,12 +83,6 @@ defineProps({
 .stat-card-red .stat-number { color: #E24B4A; }
 .stat-card-green .stat-number { color: #416517; }
 .stat-unit { font-family: 'Inter', sans-serif; font-weight: 400; font-size: 14px; color: #000000; }
-
-.gray-mode .stat-card { background: #E8E8E8 !important; }
-.gray-mode .stat-card-red, .gray-mode .stat-card-green { background: #E8E8E8 !important; }
-.gray-mode .stat-number { color: #888888 !important; }
-.gray-mode .stat-card-red .stat-number, .gray-mode .stat-card-green .stat-number { color: #888888 !important; }
-.gray-mode .stat-label, .gray-mode .stat-unit { color: #888888 !important; }
 
 @media (max-width: 992px) {
   .statistics-cards { gap: 12px; }

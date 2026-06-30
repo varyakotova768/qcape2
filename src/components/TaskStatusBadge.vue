@@ -1,4 +1,3 @@
-<!-- src/components/TaskStatusBadge.vue -->
 <template>
   <div class="task-status-badge" :class="badgeClass">
     <svg v-if="statusType === 'pending'" class="status-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"

@@ -6,7 +6,6 @@
         <StatisticsCards
           :stats="statistics"
           :periodLabel="periodLabel"
-          :isGray="false"
           :noTimeCount="allNoTimeCount"
           :tasksUnit="tasksUnit"
         />
@@ -37,9 +36,6 @@
               v-else-if="activeTab === 'tasks'"
               :tasks="filteredTasks"
               :employees="employees"
-              :dateFrom="dateFrom"
-              :dateTo="dateTo"
-              :timeFilter="timeFilter"
               :isLoading="isLoading"
               @openBitrix="openTaskInBitrix"
             />
@@ -48,7 +44,6 @@
             :distribution="distributionData"
             :taskStatuses="taskStatusList"
             :isLoading="isLoading"
-            :isGray="false"
           />
         </div>
       </div>
@@ -65,6 +60,13 @@ import EmployeeList from './components/EmployeeList.vue'
 import TaskList from './components/TaskList.vue'
 import StatisticsSidebar from './components/StatisticsSidebar.vue'
 import { bitrixService } from './services/bitrix.js'
+import {
+  isTaskInPeriod,
+  getTaskTime,
+  getTaskInterval,
+  getWorkingDaysCount,
+  isTaskIncomplete
+} from './services/taskHelpers.js'
 
 const isLoading = ref(false)
 const employees = ref([])
@@ -77,97 +79,7 @@ const activeTab = ref('employees')
 const lastUpdate = ref(new Date())
 const dateFrom = ref('')
 const dateTo = ref('')
-const timeFilter = ref('all') // 'all' | 'incomplete'
-
-// --- Вспомогательные функции для дат ---
-
-function isOverlapping(taskStart, taskEnd, rangeStart, rangeEnd) {
-  const start = taskStart || new Date(0)
-  const end = taskEnd || new Date(8640000000000000)
-  return start <= rangeEnd && end >= rangeStart
-}
-
-function getTaskInterval(task) {
-  let start = task.plannedStart ? new Date(task.plannedStart) : null
-  if (!start && task.createdDate) start = new Date(task.createdDate)
-  if (!start) return null
-
-  let end = null
-  if (task.status === 'completed') {
-    if (task.closedDate) end = new Date(task.closedDate)
-    else if (task.plannedEnd) end = new Date(task.plannedEnd)
-    else if (task.deadline) end = new Date(task.deadline)
-    else return null
-  } else {
-    if (task.plannedEnd) end = new Date(task.plannedEnd)
-    else if (task.deadline) end = new Date(task.deadline)
-    else end = new Date()
-  }
-  return { start, end }
-}
-
-function getTaskTime(task) {
-  if (task.status === 'completed') {
-    if (task.timeSpent > 0) return task.timeSpent
-    if (task.timeEstimate > 0) return task.timeEstimate
-    return 0
-  } else {
-    return task.timeEstimate > 0 ? task.timeEstimate : 0
-  }
-}
-
-function isTaskIncomplete(task) {
-  const hasStart = !!(task.plannedStart || task.createdDate)
-  let hasEnd = false
-  if (task.status === 'completed') {
-    hasEnd = !!(task.closedDate || task.plannedEnd || task.deadline)
-  } else {
-    hasEnd = !!(task.plannedEnd || task.deadline)
-  }
-  const time = getTaskTime(task)
-  const hasTime = time > 0
-  return !hasStart || !hasEnd || !hasTime
-}
-
-function getWorkingDaysCount(startDate, endDate) {
-  if (!startDate || !endDate) return 0
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  start.setHours(0, 0, 0, 0)
-  end.setHours(0, 0, 0, 0)
-  let count = 0
-  const current = new Date(start)
-  while (current <= end) {
-    const day = current.getDay()
-    if (day !== 0 && day !== 6) count++
-    current.setDate(current.getDate() + 1)
-  }
-  return count
-}
-
-function isTaskInPeriod(task, from, to) {
-  if (!from || !to) return true
-  const rangeStart = new Date(from)
-  const rangeEnd = new Date(to)
-  rangeStart.setHours(0, 0, 0, 0)
-  rangeEnd.setHours(23, 59, 59, 999)
-
-  const interval = getTaskInterval(task)
-  if (!interval) return false
-
-  let effectiveStart = interval.start
-  let effectiveEnd = interval.end
-
-  if (task.status !== 'completed') {
-    const now = new Date()
-    now.setHours(0, 0, 0, 0)
-    if (interval.end < now) {
-      effectiveEnd = now
-    }
-  }
-
-  return isOverlapping(effectiveStart, effectiveEnd, rangeStart, rangeEnd)
-}
+const timeFilter = ref('all')
 
 function computeEmployeeLoad(employee, from, to, timeFilter = 'all') {
   if (timeFilter === 'incomplete') {
@@ -251,8 +163,6 @@ function enrichEmployeesWithLoad(employees, from, to, timeFilter) {
   })
 }
 
-// --- Загрузка данных ---
-
 const enrichEmployeesWithTasks = (users, allTasks) => {
   return users.map(user => ({
     ...user,
@@ -277,14 +187,12 @@ const loadData = async () => {
 
 onMounted(loadData)
 
-// --- Данные для статистики (только задачи с временем) ---
-
 const tasksByDate = computed(() => {
   let base = tasks.value
   if (dateFrom.value && dateTo.value) {
     base = base.filter(task => isTaskInPeriod(task, dateFrom.value, dateTo.value))
   }
-  // Исключаем задачи без времени (незавершённые с timeEstimate=0 и завершённые с нулевым временем)
+
   return base.filter(task => getTaskTime(task) > 0)
 })
 
@@ -292,22 +200,29 @@ const employeesByDate = computed(() => {
   return enrichEmployeesWithLoad(employees.value, dateFrom.value, dateTo.value, timeFilter.value)
 })
 
-// --- Фильтр "Без времени" ---
-
 const isTimeFilterActive = computed(() => timeFilter.value === 'incomplete')
 
 const allNoTimeCount = computed(() => {
   return tasks.value.filter(task => isTaskIncomplete(task)).length
 })
 
-// --- Список сотрудников для фильтра "Без времени" (те, у кого есть неполные задачи) ---
 const employeesWithNoTime = computed(() => {
   return employees.value.filter(emp => (emp.tasks || []).some(task => isTaskIncomplete(task)))
 })
 
 const filteredEmployees = computed(() => {
   if (isTimeFilterActive.value) {
-    return employeesWithNoTime.value
+    let filtered = employeesWithNoTime.value
+
+    if (searchQuery.value.trim()) {
+      const q = searchQuery.value.toLowerCase().trim()
+      filtered = filtered.filter(e => {
+        const name = e.name.toLowerCase()
+        const position = e.position ? e.position.toLowerCase() : ''
+        return name.includes(q) || position.includes(q)
+      })
+    }
+    return filtered
   }
   let filtered = employeesByDate.value
   if (workloadFilter.value !== 'all') {
@@ -345,8 +260,7 @@ const filteredTasks = computed(() => {
     return result
   }
 
-  let filtered = tasksByDate.value // уже отфильтрованы по времени и датам
-  
+  let filtered = tasksByDate.value
   if (taskStatusFilter.value !== 'all') {
     filtered = filtered.filter(t => t.status === taskStatusFilter.value)
   }
@@ -365,15 +279,11 @@ const filteredTasks = computed(() => {
   return filtered
 })
 
-// --- Статистика ---
-
 const statistics = computed(() => {
   if (isTimeFilterActive.value) {
-    // Режим "Без времени": показываем только сотрудников с неполными задачами,
-    // перегруженных/свободных/нормальных нет, задачи — это все неполные задачи
     const noTimeTasks = tasks.value.filter(t => isTaskIncomplete(t))
     return {
-      totalEmployees: employeesWithNoTime.value.length,
+      totalEmployees: employees.value.length,
       overloadCount: 0,
       freeCount: 0,
       normalCount: 0,
@@ -407,7 +317,6 @@ const distributionData = computed(() => ({
   free: statistics.value.freeCount
 }))
 
-// Статусы задач для боковой панели
 const taskStatusList = computed(() => {
   let baseTasks
   if (isTimeFilterActive.value) {
@@ -422,8 +331,6 @@ const taskStatusList = computed(() => {
     { type: 'completed', label: 'Завершена', count: baseTasks.filter(t => t.status === 'completed').length, color: 'green' }
   ]
 })
-
-// --- Динамическая подпись для периода ---
 
 const periodLabel = computed(() => {
   if (isTimeFilterActive.value) return 'без времени'
@@ -440,16 +347,11 @@ const periodLabel = computed(() => {
   return 'за период'
 })
 
-// Подпись для карточки "Задач"
 const tasksUnit = computed(() => {
-  return isTimeFilterActive.value ? 'не учитывается' : 'всего'
+  return isTimeFilterActive.value ? 'не учитывается' : 'в выборке'
 })
 
-// --- Синхронизация ---
-
 const handleSync = loadData
-
-// --- Открытие в Битрикс24 ---
 
 const portalUrl = bitrixService.getPortalUrl()
 

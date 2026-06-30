@@ -1,4 +1,3 @@
-<!-- src/components/BitrixLink.vue -->
 <template>
     <button class="bitrix-link" @click="$emit('click')">
         Битрикс24

@@ -10,9 +10,6 @@
       :key="task.id"
       :task="task"
       :employees="employees"
-      :dateFrom="dateFrom"
-      :dateTo="dateTo"
-      :timeFilter="timeFilter"
       @openBitrix="$emit('openBitrix', task.id)"
     />
 
@@ -28,10 +25,7 @@ import TaskCard from './TaskCard.vue'
 defineProps({
   tasks: { type: Array, required: true },
   employees: { type: Array, default: () => [] },
-  isLoading: { type: Boolean, default: false },
-  dateFrom: { type: String, default: '' },
-  dateTo: { type: String, default: '' },
-  timeFilter: { type: String, default: 'all' }
+  isLoading: { type: Boolean, default: false }
 })
 
 defineEmits(['openBitrix'])

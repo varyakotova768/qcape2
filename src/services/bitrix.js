@@ -7,18 +7,14 @@ if (!WEBHOOK_URL) {
 class BitrixService {
   constructor() {
     this.baseUrl = WEBHOOK_URL
-    this.usersCache = null
-    this.tasksCache = null
   }
 
-  // Возвращает базовый URL портала (без /rest/...)
   getPortalUrl() {
     if (!this.baseUrl) return ''
     const match = this.baseUrl.match(/^(https?:\/\/[^\/]+)/)
     return match ? match[1] : ''
   }
 
-  // Базовый метод для запросов к API
   async call(method, params = {}) {
     if (!this.baseUrl) {
       throw new Error('WEBHOOK_URL не настроен')
@@ -40,7 +36,6 @@ class BitrixService {
     }
   }
 
-  // Получение списка активных сотрудников
   async getUsers() {
     const users = await this.call('user.get', {
       filter: { ACTIVE: 'Y' },
@@ -58,7 +53,6 @@ class BitrixService {
     }))
   }
 
-  // Получение затраченного времени
   async getTaskElapsedTime(taskId) {
     try {
       const result = await this.call('task.elapseditem.getlist', [
@@ -80,8 +74,7 @@ class BitrixService {
     }
   }
 
-  // Получение списка задач
-   async getTasks() {
+  async getTasks() {
     try {
       const response = await this.call('tasks.task.list', {
         filter: {},
@@ -95,13 +88,11 @@ class BitrixService {
       
       let tasksData = response
 
-      
-
       if (tasksData && typeof tasksData === 'object' && !Array.isArray(tasksData)) {
         tasksData = tasksData.tasks || tasksData.items || tasksData.result || []
       }
       if (!Array.isArray(tasksData)) tasksData = []
-      // Исправленный маппинг статусов
+
       const statusMap = {
         1: 'pending',
         2: 'pending', 
@@ -140,21 +131,16 @@ class BitrixService {
     }
   }
 
-  // Метод для получения данных (без задержек и моков)
   async fetchUsers() {
     const users = await this.getUsers()
-    this.usersCache = users
     return users
   }
 
-  // Метод для получения задач (без задержек и моков)
   async fetchTasks() {
     const tasks = await this.getTasks()
-    this.tasksCache = tasks
     return tasks
   }
 
-  // Получение всех данных (сотрудники + задачи)
   async fetchAllData() {
     const [users, tasks] = await Promise.all([
       this.fetchUsers(),

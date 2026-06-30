@@ -1,4 +1,3 @@
-<!-- src/components/EmployeeFilters.vue -->
 <template>
   <div class="employee-filters">
     <div class="filter-tabs">
@@ -23,7 +22,6 @@
       </div>
     </div>
 
-    <!-- Блок выбора периода (общий для сотрудников и задач) -->
     <div class="tab-content">
       <div class="period-selector">
         <div class="preset-buttons">
@@ -38,7 +36,6 @@
           </button>
         </div>
 
-        <!-- Поля для ручного ввода дат (День или Период) -->
         <div v-if="preset === 'day' || preset === 'period'" class="custom-range">
           <div class="date-inputs">
             <div class="date-field">
@@ -55,9 +52,8 @@
         </div>
       </div>
 
-      <!-- Фильтры для сотрудников -->
       <div v-if="activeTab === 'employees'">
-        <div class="workload-filters">
+        <div v-if="timeFilter !== 'incomplete'" class="workload-filters">
           <div class="workload-chip" :class="{ active: workloadFilter === 'all' }"
             @click="!isLoading && $emit('update:workloadFilter', 'all')">Все загруженности</div>
           <div class="workload-chip" :class="{ active: workloadFilter === 'overload' }"
@@ -81,7 +77,6 @@
         </div>
       </div>
 
-      <!-- Фильтры для задач -->
       <div v-else-if="activeTab === 'tasks'">
         <div class="task-filters">
           <div class="task-filter-chip" :class="{ active: taskStatusFilter === 'all' }"
@@ -185,7 +180,6 @@ function initStates() {
 }
 
 function setPreset(name) {
-  // Если выбран "Без времени" – сбрасываем его
   if (props.timeFilter === 'incomplete') {
     emit('update:timeFilter', 'all')
   }
@@ -219,8 +213,6 @@ function setTimeFilter(value) {
   }
 }
 
-// --- Исправленная обработка ручного изменения дат ---
-
 const onDateFromChange = (value) => {
   if (preset.value === 'day') {
     let from = value, to = value
@@ -233,12 +225,10 @@ const onDateFromChange = (value) => {
     let from = value
     let to = props.dateTo
 
-    // Если "По" не задано – устанавливаем равным "С"
     if (!to) {
       to = from
     }
 
-    // Если "С" >= "По" – меняем местами
     if (from && to && from >= to) {
       const tempFrom = from
       from = to
@@ -263,12 +253,10 @@ const onDateToChange = (value) => {
     let to = value
     let from = props.dateFrom
 
-    // Если "С" не задано – устанавливаем равным "По"
     if (!from) {
       from = to
     }
 
-    // Если "По" <= "С" – меняем местами
     if (from && to && to <= from) {
       const tempTo = to
       to = from

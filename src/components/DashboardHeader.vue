@@ -111,7 +111,6 @@ const formattedTime = computed(() => {
   display: block;
 }
 
-/* Анимация вращения */
 .rotating {
   animation: spin 1s linear infinite;
 }

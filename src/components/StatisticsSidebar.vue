@@ -1,5 +1,5 @@
 <template>
-  <div class="statistics-sidebar" :class="{ 'gray-mode': isGray }">
+  <div class="statistics-sidebar">
     <div v-if="isLoading" class="loading-placeholder">
       <div class="loading-spinner"></div>
       <span>Загрузка статистики...</span>
@@ -57,8 +57,7 @@ import { computed } from 'vue'
 const props = defineProps({
   distribution: { type: Object, required: true },
   taskStatuses: { type: Array, required: true },
-  isLoading: { type: Boolean, default: false },
-  isGray: { type: Boolean, default: false }
+  isLoading: { type: Boolean, default: false }
 })
 
 const totalEmployees = computed(() => {
@@ -113,15 +112,6 @@ const freeDashoffset = computed(() => {
 .sidebar-divider { width: 100%; border: 1px solid #D5D4CE; }
 .task-status-block { width: 100%; }
 .task-status-list { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
-
-.gray-mode .statistics-sidebar { background: #F5F4ED; border-color: #B6B6B5; }
-.gray-mode .sidebar-title { color: #888888; }
-.gray-mode .legend-text { color: #888888; }
-.gray-mode .pie-chart circle { stroke-opacity: 0.3; }
-.gray-mode .pie-chart circle[stroke="#E24B4A"] { stroke: #888888; }
-.gray-mode .pie-chart circle[stroke="#3C3489"] { stroke: #888888; }
-.gray-mode .pie-chart circle[stroke="#416517"] { stroke: #888888; }
-.gray-mode .sidebar-divider { border-color: #B6B6B5; }
 
 @media (max-width: 1200px) { .statistics-sidebar { width: 35%; } }
 @media (max-width: 992px) {
