@@ -9,7 +9,7 @@ export default defineConfig({
     vue(),
     vueDevTools(),
   ],
-  base: '/qcape2/',
+  base: '/bitrix24-dashboard-qscape/',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
