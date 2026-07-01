@@ -109,7 +109,7 @@ npm run deploy
 ## 📁 Структура проекта
 
 ```
-qscape2/
+bitrix24-dashboard-qscape/
 ├── node_modules/
 ├── dist/
 ├── src/
